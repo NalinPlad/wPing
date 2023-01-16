@@ -8,21 +8,19 @@ use pnet::packet::Packet;
 use pnet::transport::transport_channel; 
 use pnet::transport::TransportProtocol::Ipv4;
 use pnet::transport::TransportChannelType::Layer4;
-use rand::{thread_rng, Rng};
+use rand::{Rng};
 
 pub struct PingRequest {
     addr: IpAddr,
-    data: String,
     identifier: u16
 }
 
 
 impl PingRequest {
     pub fn new(addr: IpAddr) -> PingRequest {
-        let mut rng = thread_rng();
+        let mut rng = rand::thread_rng();
         PingRequest {
             addr,
-            data: "abcdefghijklmnopqrstuvwxyz".to_string(),
             identifier: rng.gen::<u16>(),
         }
     }
