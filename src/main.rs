@@ -9,7 +9,7 @@ mod icmp;
 
 fn main() {
     // number of threads to be created
-    let num_threads = 10000;
+    let num_threads = 10;
 
     // create send/receiver vars
     // to move data through channel
@@ -31,8 +31,8 @@ fn main() {
                     addr_ranges.sample(&mut rng), 
                     addr_ranges.sample(&mut rng)
                     ));
-            let output: u16 = ping(PingRequest::new(target));
-            tx1.send(output).unwrap();
+            ping(PingRequest::new(target));
+            tx1.send(target.to_string()).unwrap();
         //});
     }
 
@@ -43,5 +43,5 @@ fn main() {
     // End Timer
     let duration = start.elapsed();
     
-    println!("Done! took {:?}", duration);
+    println!("Done! took {:?} for {:?} targets, or {:?} hours for ipv4", duration, num_threads, (((duration / num_threads) * 4_294_967_295) / 60) / 60);
 }

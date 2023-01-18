@@ -1,13 +1,12 @@
 use std::net::IpAddr;
 
 use pnet::packet::icmp::echo_request::{MutableEchoRequestPacket};
-use pnet::packet::icmp::{IcmpTypes, IcmpCode, checksum};
+use pnet::packet::icmp::{IcmpPacket, IcmpTypes, IcmpCode, checksum};
 use pnet::packet::ip::IpNextHeaderProtocols;
-use pnet::packet::icmp::IcmpPacket;
 use pnet::packet::Packet;
 use pnet::transport::transport_channel; 
-use pnet::transport::TransportProtocol::Ipv4;
-use pnet::transport::TransportChannelType::Layer4;
+use pnet::transport::TransportProtocol::{self, Ipv4};
+use pnet::transport::TransportChannelType::{self, Layer4};
 use rand::{Rng};
 
 pub struct PingRequest {
@@ -33,13 +32,9 @@ impl PingRequest {
         return self.addr;
     }
 
-    //pub fn get_data(&self) -> [u8] {
-        //let data_bytes: [u8; 13] = self.data.as_bytes().try_into().unwrap();
-        //return data_bytes;
-    //}
 }
 
-pub fn ping(dest: PingRequest) -> u16 {
+pub fn ping(dest: PingRequest) {
     // Buffer for packet
     let mut packet_buffer = vec![0u8; 64];
 
@@ -59,7 +54,21 @@ pub fn ping(dest: PingRequest) -> u16 {
     let (mut tx, _) = transport_channel(64, Layer4(Ipv4(IpNextHeaderProtocols::Icmp))).unwrap();
 
     // Send the packet
-    tx.send_to(packet, dest.get_addr()).unwrap();
-
-    return 1;     
+    tx.send_to(packet, dest.get_addr()).unwrap();  
 }
+
+// Listener for icmp packets
+pub fn listen() {
+    let (_, mut tr) = transport_channel(64, Layer4(Ipv4(IpNextHeaderProtocols::Icmp))).unwrap();
+    
+    loop {
+        match tr.next() {
+            Ok(packet) => {
+                println!("Received ICMP Echo Reply Packet: {:?}", packet);
+            },
+            Err(e) => {
+                println!("Error while receiving packet: {:?}", e);
+            }
+        }
+    }
+} 
