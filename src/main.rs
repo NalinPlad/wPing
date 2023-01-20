@@ -4,7 +4,7 @@ use std::time::Instant;
 use std::net::{IpAddr, Ipv4Addr};
 use rand::distributions::{Distribution, Uniform};
 
-use crate::icmp::{ping, PingRequest};
+use crate::icmp::{ping, PingRequest, listen};
 mod icmp;
 
 fn main() {
@@ -35,6 +35,10 @@ fn main() {
             tx1.send(target.to_string()).unwrap();
         //});
     }
+
+    thread::spawn(move || {
+        listen()
+    });
 
     for _ in 0..num_threads {
         println!("{}", rx.recv().unwrap());
