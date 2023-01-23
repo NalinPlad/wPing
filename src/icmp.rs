@@ -4,7 +4,7 @@ use pnet::packet::icmp::echo_request::{MutableEchoRequestPacket};
 use pnet::packet::icmp::{IcmpPacket, IcmpTypes, IcmpCode, checksum};
 use pnet::packet::ip::IpNextHeaderProtocols;
 use pnet::packet::Packet;
-use pnet::transport::transport_channel; 
+use pnet::transport::{transport_channel, icmp_packet_iter}; 
 use pnet::transport::TransportProtocol::Ipv4;
 use pnet::transport::TransportChannelType::Layer4;
 use rand::{Rng};
@@ -60,16 +60,15 @@ pub fn ping(dest: PingRequest) {
 // Listener for icmp packets
 pub fn listen() {
     let (_, mut tr) = transport_channel(64, Layer4(Ipv4(IpNextHeaderProtocols::Icmp))).unwrap();
+
+    let mut receiver = icmp_packet_iter(&mut tr);
     
-    println!("Hellotdst {:?}", tr.buffer)
-    // loop {
-    //     match tr.next() {
-    //         Ok(packet) => {
-    //             println!("Received ICMP Echo Reply Packet: {:?}", packet);
-    //         },
-    //         Err(e) => {
-    //             println!("Error while receiving packet: {:?}", e);
-    //         }
-    //     }
-    // }
+    loop {
+        // get next packet
+        let (packet, addr) = receiver.next().unwrap();
+
+        println!("{:?}",packet);
+        
+    }
+
 } 

@@ -3,6 +3,7 @@ use std::sync::mpsc;
 use std::time::Instant;
 use std::net::{IpAddr, Ipv4Addr};
 use rand::distributions::{Distribution, Uniform};
+use mpsc::channel;
 
 use crate::icmp::{ping, PingRequest, listen};
 mod icmp;
@@ -13,7 +14,7 @@ fn main() {
 
     // create send/receiver vars
     // to move data through channel
-    let (tx, rx) = mpsc::channel();
+    let (tx, rx) = channel();
 
     // Start timer
     let start = Instant::now();
@@ -36,9 +37,12 @@ fn main() {
         //});
     }
 
-    thread::spawn(move || {
-        listen()
+    // // let (tx_listen, rx_listen) = channel();
+    let listner_thread = thread::spawn(move || {
+        listen();
     });
+
+    listner_thread.join().unwrap();
 
     for _ in 0..num_threads {
         println!("{}", rx.recv().unwrap());
