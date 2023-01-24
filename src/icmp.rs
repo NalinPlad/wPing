@@ -1,13 +1,16 @@
 use std::net::IpAddr;
 
 use pnet::packet::icmp::echo_request::{MutableEchoRequestPacket};
-use pnet::packet::icmp::{IcmpPacket, IcmpTypes, IcmpCode, checksum};
+use pnet::packet::icmp::{IcmpPacket, IcmpTypes, IcmpCode, checksum, echo_reply};
 use pnet::packet::ip::IpNextHeaderProtocols;
 use pnet::packet::Packet;
 use pnet::transport::{transport_channel, icmp_packet_iter}; 
 use pnet::transport::TransportProtocol::Ipv4;
 use pnet::transport::TransportChannelType::Layer4;
 use rand::{Rng};
+
+// ICMP identifier for program
+const IDN: u16 = 1337;
 
 pub struct PingRequest {
     addr: IpAddr,
@@ -17,10 +20,9 @@ pub struct PingRequest {
 
 impl PingRequest {
     pub fn new(addr: IpAddr) -> PingRequest {
-        let mut rng = rand::thread_rng();
         PingRequest {
             addr,
-            identifier: rng.gen::<u16>(),
+            identifier: IDN,
         }
     }
 
@@ -66,9 +68,13 @@ pub fn listen() {
     loop {
         // get next packet
         let (packet, addr) = receiver.next().unwrap();
+        if(packet.get_icmp_type() == IcmpTypes::EchoReply) {
+            let echo_reply =  echo_reply::EchoReplyPacket::new(packet.packet()).unwrap();
+            if(echo_reply.get_identifier() == IDN) {
+                println!("Received from {}", addr);
+            }
+        }
 
-        println!("{:?}",packet);
-        
     }
 
 } 

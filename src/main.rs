@@ -10,7 +10,7 @@ mod icmp;
 
 fn main() {
     // number of threads to be created
-    let num_threads = 10;
+    let num_threads = 10000;
 
     // create send/receiver vars
     // to move data through channel
