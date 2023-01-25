@@ -6,11 +6,14 @@ use rand::distributions::{Distribution, Uniform};
 use mpsc::channel;
 
 use crate::icmp::{ping, PingRequest, listen};
+use crate::ip_space::{next_ip, NUM_IPS};
+
 mod icmp;
+mod ip_space;
 
 fn main() {
-    // number of threads to be created
-    let num_threads = 10000;
+    // number of ips to be scanned(default is all ips, set to lower for testing)
+    let num_ips_to_scan = NUM_IPS;
 
     // create send/receiver vars
     // to move data through channel
@@ -21,23 +24,21 @@ fn main() {
 
     let addr_ranges = Uniform::from(1..=255);
 
-    for _ in 0..num_threads {
+    for _ in 0..num_ips_to_scan {
         let tx1 = tx.clone();
         //thread::spawn(move || {
-            let mut rng = rand::thread_rng();
-            
-            let target: IpAddr = IpAddr::V4(Ipv4Addr::new(
-                    addr_ranges.sample(&mut rng), 
-                    addr_ranges.sample(&mut rng), 
-                    addr_ranges.sample(&mut rng), 
-                    addr_ranges.sample(&mut rng)
-                    ));
+            let target: IpAddr = next_ip(step, visited);
             ping(PingRequest::new(target));
             tx1.send(target.to_string()).unwrap();
         //});
     }
 
-    // // let (tx_listen, rx_listen) = channel();
+    // End Timer
+    let duration = start.elapsed();
+    
+    println!("Done sending! took {:?} for {:?} targets, or {:?} hours for ipv4", duration, num_threads, (((duration / num_threads) * 4_294_967_295) / 60) / 60);
+    
+    // let (tx_listen, rx_listen) = channel();
     let listner_thread = thread::spawn(move || {
         listen();
     });
@@ -48,8 +49,4 @@ fn main() {
         println!("{}", rx.recv().unwrap());
     }
 
-    // End Timer
-    let duration = start.elapsed();
-    
-    println!("Done! took {:?} for {:?} targets, or {:?} hours for ipv4", duration, num_threads, (((duration / num_threads) * 4_294_967_295) / 60) / 60);
 }
