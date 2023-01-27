@@ -56,7 +56,11 @@ pub fn ping(dest: PingRequest) {
     let (mut tx, _) = transport_channel(64, Layer4(Ipv4(IpNextHeaderProtocols::Icmp))).unwrap();
 
     // Send the packet
-    tx.send_to(packet, dest.get_addr()).unwrap();  
+    match tx.send_to(packet, dest.get_addr()) {
+        Ok(_) => {},
+        Err(_) => {println!("Unreachable address")}
+    }
+
 }
 
 // Listener for icmp packets
