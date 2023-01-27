@@ -12,7 +12,7 @@ mod ip_space;
 
 fn main() {
     // number of ips to be scanned(default is all NUM_IPS, set to lower for testing)
-    let num_ips_to_scan = NUM_IPS;
+    let num_ips_to_scan = 1000;
     
     // Create listner thread
     let listner_thread = thread::spawn(move || {
@@ -28,15 +28,15 @@ fn main() {
     // Start timer
     let start = Instant::now();
 
+    let mut step:u32 = 0;
+    let mut visited = vec![false; NUM_IPS.try_into().unwrap()];
+    
     for _ in 0..num_ips_to_scan {
         let tx1 = tx.clone();
         
-        let mut step:u32 = 0;
-        let mut visited = vec![false; NUM_IPS.try_into().unwrap()];
-
         let target: IpAddr = next_ip(&mut step, &mut visited);
 
-        println!("{}/{} {:?}", step, NUM_IPS, target);
+        println!("[{}] {:?}", step, target);
 
         ping(PingRequest::new(target));
         tx1.send(target.to_string()).unwrap();
@@ -49,8 +49,8 @@ fn main() {
     
 
 
-    for _ in 0..num_ips_to_scan {
-        println!("{}", rx.recv().unwrap());
-    }
+    // for _ in 0..num_ips_to_scan {
+    //     println!("{}", rx.recv().unwrap());
+    // }
 
 }

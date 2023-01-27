@@ -16,7 +16,8 @@ pub fn next_ip(step: &mut u32, visited: &mut Vec<bool>) -> IpAddr {
                 }
             }        
         }
-        step = ;
+
+        *step += 1;
 
         return IpAddr::V4(Ipv4Addr::new(
         ((r-k >> 24) & 255).try_into().unwrap(), 
