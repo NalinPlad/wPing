@@ -13,10 +13,12 @@ mod ip_space;
 fn main() {
     // number of ips to be scanned(default is all NUM_IPS, set to lower for testing)
     let num_ips_to_scan = 100000;
+    // max seconds to wait for packets until exiting
+    let _max_timeout = 5;
     
     // Create listner thread. Leave unblocking until all requests are sent.
     let listner_thread = thread::spawn(move || {
-        listen();
+        listen("data.csv".to_string());
     });
 
     // create send/receiver vars
