@@ -58,11 +58,13 @@ pub fn ping(dest: PingRequest) {
     let (mut tx, _) = transport_channel(64, Layer4(Ipv4(IpNextHeaderProtocols::Icmp))).unwrap();
 
     // Send the packet
-    match tx.send_to(packet, dest.get_addr()) {
-        Ok(_) => {},
-        Err(_) => {}
-    }
-
+    // match tx.send_to(packet, dest.get_addr()) {
+    //     Ok(_) => {},
+    //     Err(_) => {}
+    // }
+    if let Ok(_) = tx.send_to(packet, dest.get_addr()) {
+    } else { // cant ping ip, so dont do anything
+    }        // have to do this because it panics otherwise
 }
 
 fn ip_to_subnet(ip: &str) -> String {
