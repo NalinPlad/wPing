@@ -22,7 +22,7 @@ fn main() {
     });
 
     // create send/receiver vars
-    let (tx, _rx) = channel();
+    // let (tx, _rx) = channel();
 
     // Start timer
     let start = Instant::now();
@@ -33,14 +33,18 @@ fn main() {
     
     // Send ICMP requests
     for _ in 0..num_ips_to_scan {
-        let tx1 = tx.clone();
+        // let tx1 = tx.clone();
         
+        let gen_ip = Instant::now();
         let target: IpAddr = next_ip(&mut step, &mut visited);
+        println!("next ip took {:?}", gen_ip.elapsed());
 
-        println!("[{}] {:?}", step, target);
-
+        println!("[{} / {} {}%] {:?}", step, num_ips_to_scan, step as f32 / num_ips_to_scan as f32 * 100.0, target);
+        
+        let ping_time = Instant::now();
         ping(PingRequest::new(target));
-        tx1.send(target.to_string()).unwrap();
+        println!("ping took {:?}", ping_time.elapsed())
+        // tx1.send(target.to_string()).unwrap();
     }
 
     // End Timer for sending
