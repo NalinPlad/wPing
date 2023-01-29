@@ -1,8 +1,11 @@
 use std::thread;
-use std::sync::mpsc;
 use std::time::Instant;
 use std::net::{IpAddr};
-use mpsc::channel;
+
+use pnet::packet::ip::IpNextHeaderProtocols;
+use pnet::transport::transport_channel;
+use pnet::transport::TransportProtocol::Ipv4;
+use pnet::transport::TransportChannelType::Layer4;
 
 use crate::icmp::{ping, PingRequest, listen};
 use crate::ip_space::{next_ip, NUM_IPS};
@@ -12,13 +15,13 @@ mod ip_space;
 
 fn main() {
     // number of ips to be scanned(default is all NUM_IPS, set to lower for testing)
-    let num_ips_to_scan = 100000;
+    let num_ips_to_scan = NUM_IPS;
     // max seconds to wait for packets until exiting
     let _max_timeout = 5;
     
     // Create listner thread. Leave unblocking until all requests are sent.
     let listner_thread = thread::spawn(move || {
-        listen("data.csv".to_string());
+        listen(format!("data_{}.csv", num_ips_to_scan).to_string());
     });
 
     // create send/receiver vars
@@ -40,9 +43,13 @@ fn main() {
         println!("next ip took {:?}", gen_ip.elapsed());
 
         println!("[{} / {} {}%] {:?}", step, num_ips_to_scan, step as f32 / num_ips_to_scan as f32 * 100.0, target);
-        
+
+        // Open a channel to send the packet
+        let (mut tx, _) = transport_channel(64, Layer4(Ipv4(IpNextHeaderProtocols::Icmp))).unwrap();
+
+
         let ping_time = Instant::now();
-        ping(PingRequest::new(target));
+        ping(PingRequest::new(target), &mut tx);
         println!("ping took {:?}", ping_time.elapsed())
         // tx1.send(target.to_string()).unwrap();
     }

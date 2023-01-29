@@ -4,7 +4,7 @@ use pnet::packet::icmp::echo_request::{MutableEchoRequestPacket};
 use pnet::packet::icmp::{IcmpPacket, IcmpTypes, IcmpCode, checksum, echo_reply};
 use pnet::packet::ip::IpNextHeaderProtocols;
 use pnet::packet::Packet;
-use pnet::transport::{transport_channel, icmp_packet_iter}; 
+use pnet::transport::{transport_channel, icmp_packet_iter, TransportSender}; 
 use pnet::transport::TransportProtocol::Ipv4;
 use pnet::transport::TransportChannelType::Layer4;
 
@@ -38,7 +38,7 @@ impl PingRequest {
 
 }
 
-pub fn ping(dest: PingRequest) {
+pub fn ping(dest: PingRequest, tx: &mut TransportSender) {
     // Buffer for packet
     let mut packet_buffer = vec![0u8; 64];
 
@@ -55,7 +55,7 @@ pub fn ping(dest: PingRequest) {
     packet.set_checksum(checksum);
 
     // Open a channel to send the packet
-    let (mut tx, _) = transport_channel(64, Layer4(Ipv4(IpNextHeaderProtocols::Icmp))).unwrap();
+    // let (mut tx, _) = transport_channel(64, Layer4(Ipv4(IpNextHeaderProtocols::Icmp))).unwrap();
 
     // Send the packet
     // match tx.send_to(packet, dest.get_addr()) {
