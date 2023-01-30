@@ -4,7 +4,7 @@ use pnet::packet::icmp::echo_request::{MutableEchoRequestPacket};
 use pnet::packet::icmp::{IcmpPacket, IcmpTypes, IcmpCode, checksum, echo_reply};
 use pnet::packet::ip::IpNextHeaderProtocols;
 use pnet::packet::Packet;
-use pnet::transport::{transport_channel, icmp_packet_iter, TransportSender}; 
+use pnet::transport::{transport_channel, icmp_packet_iter}; 
 use pnet::transport::TransportProtocol::Ipv4;
 use pnet::transport::TransportChannelType::Layer4;
 
@@ -38,7 +38,7 @@ impl PingRequest {
 
 }
 
-pub fn ping(dest: PingRequest, tx: &mut TransportSender) {
+pub fn ping(dest: PingRequest) {
     // Buffer for packet
     let mut packet_buffer = vec![0u8; 64];
 
@@ -55,7 +55,7 @@ pub fn ping(dest: PingRequest, tx: &mut TransportSender) {
     packet.set_checksum(checksum);
 
     // Open a channel to send the packet
-    // let (mut tx, _) = transport_channel(64, Layer4(Ipv4(IpNextHeaderProtocols::Icmp))).unwrap();
+    let (mut tx, _) = transport_channel(64, Layer4(Ipv4(IpNextHeaderProtocols::Icmp))).unwrap();
 
     // Send the packet
     // match tx.send_to(packet, dest.get_addr()) {
@@ -88,7 +88,7 @@ pub fn listen(filename: String) {
         if packet.get_icmp_type() == IcmpTypes::EchoReply {
             let echo_reply =  echo_reply::EchoReplyPacket::new(packet.packet()).unwrap();
             if echo_reply.get_identifier() == IDN {
-                println!("Received from {}", addr);
+                // println!("Received from {}", addr);
                 write_data(&filename, ip_to_subnet(&addr.to_string()))
             }
         }
