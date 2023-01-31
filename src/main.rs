@@ -2,7 +2,9 @@ use std::io::{stdout};
 use std::io::Write;
 use std::thread;
 use std::time::Instant;
+
 use std::net::{IpAddr};
+
 
 use crate::icmp::{ping, PingRequest, listen};
 use crate::ip_space::{next_ip, NUM_IPS};
@@ -12,18 +14,18 @@ mod ip_space;
 
 fn main() {
     // number of ips to be scanned(default is all NUM_IPS, set to lower for testing)
-    const NUM_IPS_TO_SCAN:u32 = 100_000;
-    const MAX_THREADS: usize = 1_000;
+    const NUM_IPS_TO_SCAN:u32 = 100000;
+    // max threads for sending, should use double
+    const MAX_THREADS: usize = 100;
+
     // max seconds to wait for packets until exiting
     let _max_timeout = 5;
     
     // Create listner thread. Leave unblocking until all requests are sent.
     let listner_thread = thread::spawn(move || {
-        listen(format!("data_{}.csv", NUM_IPS_TO_SCAN).to_string());
+        let mut count_recv = 0;
+        listen(format!("data_{}.csv", NUM_IPS_TO_SCAN).to_string(), &mut count_recv);
     });
-
-    // create send/receiver vars
-    // let (tx, _rx) = channel();
 
     // Start timer
     let start = Instant::now();
@@ -37,25 +39,29 @@ fn main() {
     .num_threads(MAX_THREADS)
     .build();
         
+    // Open a channel to send the packet
+    // let (mut tx, _) = transport_channel(64, Layer4(Ipv4(IpNextHeaderProtocols::Icmp))).unwrap();
     
     // Send ICMP requests
     for _ in 0..NUM_IPS_TO_SCAN {
-        // let tx1 = tx.clone();
-        
-        // let gen_ip = Instant::now();
         let target: IpAddr = next_ip(&mut step, &mut visited);
-        // println!("next ip took {:?}", gen_ip.elapsed());
+        let t_string = target.to_string();
 
-        print!("\r[{} / {} {}%]", step, NUM_IPS_TO_SCAN, step as f32 / NUM_IPS_TO_SCAN as f32 * 100.0);
+        if target.is_loopback() 
+        || target.is_multicast()
+        || t_string.to_string().starts_with("0")
+        || t_string.to_string().starts_with("127")
+        || t_string.to_string().starts_with("10")
+        || t_string.to_string().split(".").collect::<Vec<&str>>()[0].parse::<u8>().unwrap() > 223{
+            continue;
+        }
+
+        print!("\r[{} / {} {}%", step, NUM_IPS_TO_SCAN, step as f32 / NUM_IPS_TO_SCAN as f32 * 100.0);
         stdout().flush().unwrap();
 
         pool.execute(move || {
             ping(PingRequest::new(target));
         });
-
-        // let ping_time = Instant::now();
-        // println!("ping took {:?}", ping_time.elapsed())
-        // tx1.send(target.to_string()).unwrap();
     }
 
     // End Timer for sending
@@ -66,9 +72,5 @@ fn main() {
     
     // Start blocking main thread for listner
     listner_thread.join().unwrap();
-
-    // for _ in 0..num_ips_to_scan {
-    //     println!("{}", rx.recv().unwrap());
-    // }
 
 }

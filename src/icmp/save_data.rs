@@ -22,8 +22,8 @@ pub fn init_file(file_name: &str) {
 //     file.write_all(data.as_bytes()).unwrap();
 // }
 
-pub fn write_data(file_name: &str, block: String) {
-    let mut rdr = Reader::from_path(file_name).unwrap();
+pub fn write_data(file_name: String, block: String) {
+    let mut rdr = Reader::from_path(&file_name).unwrap();
     let mut found = false;
 
     for result in rdr.records() {
@@ -39,7 +39,7 @@ pub fn write_data(file_name: &str, block: String) {
             let mut file = OpenOptions::new()
                 .write(true)
                 .append(true)
-                .open(file_name)
+                .open(&file_name)
                 .unwrap();
 
             // Replace the current name and score with the updated values
@@ -54,7 +54,7 @@ pub fn write_data(file_name: &str, block: String) {
         let mut file = OpenOptions::new()
             .write(true)
             .append(true)
-            .open(file_name)
+            .open(&file_name)
             .unwrap();
 
         let data = format!("{},1\n", block);

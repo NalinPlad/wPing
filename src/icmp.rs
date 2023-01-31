@@ -67,29 +67,36 @@ pub fn ping(dest: PingRequest) {
     }        // have to do this because it panics otherwise
 }
 
-fn ip_to_subnet(ip: &str) -> String {
+fn ip_to_subnet(ip: String) -> String {
     let ip_parts: Vec<&str> = ip.split(".").collect();
     let subnet = format!("{}.{}.{}.0/24", ip_parts[0], ip_parts[1], ip_parts[2]);
     subnet
 }
 
 // Listener for icmp packets
-pub fn listen(filename: String) {
-    init_file(&filename);
+pub fn listen(filename: String, count_recv: &mut u32) {
+    init_file("test.csv");
 
     let (_, mut tr) = transport_channel(64, Layer4(Ipv4(IpNextHeaderProtocols::Icmp))).unwrap();
 
     let mut receiver = icmp_packet_iter(&mut tr);
 
+    // Create thread pool
+    let pool = threadpool::Builder::new()
+    .num_threads(100)
+    .build();
+
     loop {
-        
         // get next packet if we aren't done
         let (packet, addr) = receiver.next().unwrap();
         if packet.get_icmp_type() == IcmpTypes::EchoReply {
             let echo_reply =  echo_reply::EchoReplyPacket::new(packet.packet()).unwrap();
             if echo_reply.get_identifier() == IDN {
-                // println!("Received from {}", addr);
-                write_data(&filename, ip_to_subnet(&addr.to_string()))
+                println!("\n\rReceived from {}, recv {}", addr, count_recv);
+                *count_recv += 1;
+                pool.execute(move || {
+                    write_data("test.csv".to_string(), ip_to_subnet(addr.to_string()))
+                });
             }
         }
         
