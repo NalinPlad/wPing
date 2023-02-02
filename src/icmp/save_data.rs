@@ -13,15 +13,6 @@ pub fn init_file(file_name: &str) {
     file.write_all(header.as_bytes()).unwrap();
 }
 
-// pub fn write_data(file_name: &str, block: String) {
-//     let mut file = OpenOptions::new()
-//         .append(true)
-//         .open(file_name)
-//         .unwrap();
-//     let data = format!("{},{}\n", block, 1);
-//     file.write_all(data.as_bytes()).unwrap();
-// }
-
 pub fn write_data(file_name: String, block: String) {
     let mut rdr = Reader::from_path(&file_name).unwrap();
     let mut found = false;
