@@ -1,3 +1,4 @@
+use core::time;
 use std::io::{stdout};
 use std::io::Write;
 use std::thread;
@@ -14,7 +15,7 @@ mod ip_space;
 
 fn main() {
     // number of ips to be scanned(default is all NUM_IPS, set to lower for testing)
-    const NUM_IPS_TO_SCAN:u32 = 100000;
+    const NUM_IPS_TO_SCAN:u32 = 1_000_000;
     // max threads for sending, should use double
     const MAX_THREADS: usize = 100;
 
@@ -26,6 +27,9 @@ fn main() {
         let mut count_recv = 0;
         listen(format!("data_{}.csv", NUM_IPS_TO_SCAN).to_string(), &mut count_recv);
     });
+
+    // We need to sleep to give listner time to intialize, or else we loose ~ 5k packets at start
+    thread::sleep(time::Duration::from_millis(3000));
 
     // Start timer
     let start = Instant::now();

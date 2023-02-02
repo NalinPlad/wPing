@@ -1,4 +1,6 @@
-use std::net::IpAddr;
+use std::net::{IpAddr, Ipv4Addr};
+
+use pcap::{Capture, Device};
 
 use pnet::packet::icmp::echo_request::{MutableEchoRequestPacket};
 use pnet::packet::icmp::{IcmpPacket, IcmpTypes, IcmpCode, checksum, echo_reply};
@@ -77,31 +79,40 @@ fn ip_to_subnet(ip: String) -> String {
 pub fn listen(filename: String, count_recv: &mut u32) {
     init_file("test.csv");
 
-    let (_, mut tr) = transport_channel(64, Layer4(Ipv4(IpNextHeaderProtocols::Icmp))).unwrap();
+    // let (_, mut tr) = transport_channel(64, Layer4(Ipv4(IpNextHeaderProtocols::Icmp))).unwrap();
 
-    let mut receiver = icmp_packet_iter(&mut tr);
+    // let mut receiver = icmp_packet_iter(&mut tr);
+    
+    let mut cap = Capture::from_device("en0") // open the "default" interface
+              .unwrap() // assume the device exists and we are authorized to open it
+              .open() // activate the handle
+              .unwrap(); // assume activation worked
 
+    // Filter by our ICMP packets
+    cap.filter(r"icmp", false).unwrap();
+    
     // Create thread pool
     let pool = threadpool::Builder::new()
     .num_threads(100)
     .build();
 
-    loop {
+    // Get packets
+    while let Ok(packet) = cap.next_packet() {
         // get next packet if we aren't done
-        let (packet, addr) = receiver.next().unwrap();
-        if packet.get_icmp_type() == IcmpTypes::EchoReply {
-            let echo_reply =  echo_reply::EchoReplyPacket::new(packet.packet()).unwrap();
-            if echo_reply.get_identifier() == IDN {
-                println!("\n\rReceived from {}, recv {}", addr, count_recv);
-                *count_recv += 1;
-                pool.execute(move || {
-                    write_data("test.csv".to_string(), ip_to_subnet(addr.to_string()))
-                });
-            }
+        // let (packet, addr) = receiver.next().unwrap();
+        let data = packet.data;
+        if data[34] == 8 {
+            continue;
         }
-        
 
-
+        // https://www.rfc-editor.org/rfc/rfc792.html
+        let addr = IpAddr::V4(Ipv4Addr::new(packet.data[26],packet.data[27],packet.data[28],packet.data[29]));
+        println!("\n\rReceived from {:?}, recv {}", addr, count_recv);
+        *count_recv += 1;
+        pool.execute(move || {
+            write_data("test.csv".to_string(), ip_to_subnet(addr.to_string()))
+        });
     }
+    println!("done")
 
 } 
