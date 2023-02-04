@@ -1,12 +1,13 @@
 use std::net::{IpAddr, Ipv4Addr};
+use std::sync::Arc;
 
-use pcap::{Capture, Device};
+use pcap::{Capture};
 
 use pnet::packet::icmp::echo_request::{MutableEchoRequestPacket};
-use pnet::packet::icmp::{IcmpPacket, IcmpTypes, IcmpCode, checksum, echo_reply};
+use pnet::packet::icmp::{IcmpPacket, IcmpTypes, IcmpCode, checksum};
 use pnet::packet::ip::IpNextHeaderProtocols;
 use pnet::packet::Packet;
-use pnet::transport::{transport_channel, icmp_packet_iter}; 
+use pnet::transport::{transport_channel}; 
 use pnet::transport::TransportProtocol::Ipv4;
 use pnet::transport::TransportChannelType::Layer4;
 
@@ -77,7 +78,7 @@ fn ip_to_subnet(ip: String) -> String {
 
 // Listener for icmp packets
 pub fn listen(filename: String, count_recv: &mut u32) {
-    init_file("test.csv");
+    init_file(&filename);
 
     // let (_, mut tr) = transport_channel(64, Layer4(Ipv4(IpNextHeaderProtocols::Icmp))).unwrap();
 
@@ -85,6 +86,7 @@ pub fn listen(filename: String, count_recv: &mut u32) {
     
     let mut cap = Capture::from_device("en0") // open the "default" interface
               .unwrap() // assume the device exists and we are authorized to open it
+              .timeout(5000) // block for 5 seconds
               .open() // activate the handle
               .unwrap(); // assume activation worked
 
@@ -107,10 +109,14 @@ pub fn listen(filename: String, count_recv: &mut u32) {
 
         // https://www.rfc-editor.org/rfc/rfc792.html
         let addr = IpAddr::V4(Ipv4Addr::new(packet.data[26],packet.data[27],packet.data[28],packet.data[29]));
-        println!("\n\rReceived from {:?}, recv {}", addr, count_recv);
+        println!("\rReceived from {:?}, recv {}", addr, count_recv);
         *count_recv += 1;
+        
+        let filename = Arc::new(filename.to_string());
+
         pool.execute(move || {
-            write_data("test.csv".to_string(), ip_to_subnet(addr.to_string()))
+            let filename = filename.clone();
+            write_data(filename.to_string(), ip_to_subnet(addr.to_string()))
         });
     }
     println!("done")

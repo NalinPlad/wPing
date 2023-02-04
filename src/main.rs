@@ -15,7 +15,7 @@ mod ip_space;
 
 fn main() {
     // number of ips to be scanned(default is all NUM_IPS, set to lower for testing)
-    const NUM_IPS_TO_SCAN:u32 = 100000;
+    const NUM_IPS_TO_SCAN:u32 = 1_000_000;
 
     // max threads for sending, should use double
     const MAX_THREADS: usize = 100;

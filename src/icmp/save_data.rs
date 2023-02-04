@@ -1,8 +1,7 @@
 use std::{fs::OpenOptions, io::Write};
-use csv::Reader;
 
 pub fn init_file(file_name: &str) {
-    let mut _file = OpenOptions::new()
+    let mut file = OpenOptions::new()
         .write(true)
         .create(true)
         .truncate(true)
@@ -10,7 +9,7 @@ pub fn init_file(file_name: &str) {
         .unwrap();
 
     // let header = "block,count\n";
-    // file.write_all(header.as_bytes()).unwrap();
+    file.write_all("".as_bytes()).unwrap();
 }
 
 fn block_to_number(ip_block: &str) -> u32 {

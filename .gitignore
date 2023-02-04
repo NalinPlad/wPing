@@ -15,3 +15,6 @@ Cargo.lock
 # Added by cargo
 
 /target
+
+# Don't expose .pem file challenge (impossible)
+**/*.pem
