@@ -31,7 +31,8 @@ fn main() {
     // Create listner thread. Leave unblocking until all requests are sent.
     let listner_thread = thread::spawn(move || {
         let mut count_recv = 0;
-        listen(format!("data_{}.csv", NUM_IPS_TO_SCAN).to_string(), &mut count_recv);
+        let device = if !(args.len() > 2) {"en0"} else {&args[2]};
+        listen(format!("data_{}.csv", NUM_IPS_TO_SCAN).to_string(), &mut count_recv, device);
     });
 
     // We need to sleep to give listner time to intialize, or else we loose ~ 5k packets at start

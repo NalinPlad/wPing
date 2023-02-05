@@ -78,14 +78,14 @@ fn ip_to_subnet(ip: String) -> String {
 }
 
 // Listener for icmp packets
-pub fn listen(filename: String, count_recv: &mut u32) {
+pub fn listen(filename: String, count_recv: &mut u32, device: &str) {
     init_file(&filename);
 
     // let (_, mut tr) = transport_channel(64, Layer4(Ipv4(IpNextHeaderProtocols::Icmp))).unwrap();
 
     // let mut receiver = icmp_packet_iter(&mut tr);
     
-    let mut cap = Capture::from_device("en0") // open the "default" interface
+    let mut cap = Capture::from_device(device) // open the "default" interface
               .unwrap() // assume the device exists and we are authorized to open it
               .timeout(5000)
               .buffer_size(64*1000) // block for 1 minute just in case 
