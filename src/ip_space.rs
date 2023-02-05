@@ -1,6 +1,7 @@
 use std::net::{IpAddr, Ipv4Addr};
 
 pub const NUM_IPS: u32 = u32::MAX;
+// pub const SEED: u8 = 123;
 
 pub fn next_ip(step: &mut u32, visited: &mut Vec<bool>) -> IpAddr {
     if step < &mut NUM_IPS {

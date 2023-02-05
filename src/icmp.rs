@@ -52,6 +52,7 @@ pub fn ping(dest: PingRequest) {
     packet.set_icmp_type(IcmpTypes::EchoRequest);
     packet.set_sequence_number(0); // 0 for first in sequence
     packet.set_identifier(dest.get_identifier());
+    packet.set_payload("".as_bytes());
     packet.set_icmp_code(IcmpCode::new(0));
     
     let checksum = checksum(&IcmpPacket::new(packet.packet()).unwrap());
@@ -86,7 +87,8 @@ pub fn listen(filename: String, count_recv: &mut u32) {
     
     let mut cap = Capture::from_device("en0") // open the "default" interface
               .unwrap() // assume the device exists and we are authorized to open it
-              .timeout(5000) // block for 5 seconds
+              .timeout(5000)
+              .buffer_size(64*1000) // block for 1 minute just in case 
               .open() // activate the handle
               .unwrap(); // assume activation worked
 
@@ -103,14 +105,15 @@ pub fn listen(filename: String, count_recv: &mut u32) {
         // get next packet if we aren't done
         // let (packet, addr) = receiver.next().unwrap();
         let data = packet.data;
-        if data[34] == 8 {
+        if data[34] != 0 {
             continue;
         }
 
         // https://www.rfc-editor.org/rfc/rfc792.html
         let addr = IpAddr::V4(Ipv4Addr::new(packet.data[26],packet.data[27],packet.data[28],packet.data[29]));
-        println!("\rReceived from {:?}, recv {}", addr, count_recv);
         *count_recv += 1;
+
+        // println!("{} from {:?}, 34 {}", addr, data, data[34]);
         
         let filename = Arc::new(filename.to_string());
 

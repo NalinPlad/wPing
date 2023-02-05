@@ -1,7 +1,7 @@
 use core::time;
 use std::io::{stdout};
 use std::io::Write;
-use std::thread;
+use std::{thread, env};
 use std::time::Instant;
 
 use std::net::{IpAddr};
@@ -14,8 +14,13 @@ mod icmp;
 mod ip_space;
 
 fn main() {
+    let args: Vec<String> = env::args().collect();
+
+    // dbg!(args.len());
+    
     // number of ips to be scanned(default is all NUM_IPS, set to lower for testing)
-    const NUM_IPS_TO_SCAN:u32 = 1_000_000;
+    let NUM_IPS_TO_SCAN:u32 = if !(args.len() > 1) {NUM_IPS} else {args[1].parse::<u32>().unwrap()};
+    // let NUM_IPS_TO_SCAN: u32 = 100;
 
     // max threads for sending, should use double
     const MAX_THREADS: usize = 100;
